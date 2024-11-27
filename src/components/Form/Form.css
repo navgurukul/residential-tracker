@@ -1,0 +1,171 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  background-color: #f9f9f9;
+  border:3px solid #21a1f1;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 300px;
+  margin: auto;
+  
+}
+
+form > div {
+  width: 100%;
+}
+
+label {
+  font-weight: bold;
+  margin-bottom: 5px;
+  display: block;
+}
+select {
+  font-size: 1rem;
+}
+
+textarea {
+  resize: vertical;
+}
+
+input, textarea, select {
+  width: calc(100% - 20px);
+  padding: 10px;
+  margin: 5px 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+textarea {
+  resize: vertical;
+}
+
+button {
+  padding: 10px 20px;
+  background-color: #61dafb;
+  border: none;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #21a1f1;
+}
+
+h3 {
+  margin-top: 20px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+td {
+  max-width: 300px;
+  word-wrap: break-word; 
+  white-space: normal; 
+}
+
+.App-header {
+  background-color: #282c34;
+  padding: 20px;
+  color: white;
+}
+
+.App-header h1 {
+  margin: 0;
+}
+
+.delete-button, .save-button {
+  background-color: #8f0a00;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+ 
+ 
+}
+.button-container {
+  display: flex;
+  flex-direction: column; 
+  gap: 10px; 
+}
+
+.delete-button {
+  background-color: #8f0a00;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100px; 
+}
+.delete-button, .edit-button {
+  width: 130px; 
+  padding: 5px 10px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  color: white;
+  height: 30px;
+}
+
+.edit-button, .save-button{
+  background-color: #4CAF50;
+  margin-bottom: 10px;
+  /* width: 100px; */
+  /* height:20px */
+
+}
+.delete-button:hover{
+  background-color: #d32f2f;
+}
+.icon-white {
+  color: white;
+}
+
+.full-width-button {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 700px) { 
+  .full-width-button {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 600px) { 
+  .delete-button, .edit-button {
+    width: 100%; 
+    max-width: 100%; 
+    box-sizing: border-box; 
+  }
+}
+@media (max-width: 700px) { 
+  .from-1 {
+    width: 90%; 
+    max-width: 300px; 
+  }
+}
