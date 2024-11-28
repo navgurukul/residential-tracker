@@ -384,7 +384,7 @@ const Form = () => {
   return (
     <div>
       <LoadingSpinner loading={loading} className="loader-container" />
-      <h1 style={{ textAlign: "center" }}>Daily Residential Tracker </h1>
+      <h1 style={{ textAlign: "center" }}>Daily Productivity Tracker</h1>
       <p style={{ textAlign: "center" }}>
         Fill out the form below to record your daily tasks.
       </p>

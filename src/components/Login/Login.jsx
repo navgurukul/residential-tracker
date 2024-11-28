@@ -62,7 +62,7 @@ function Login() {
     <div className="main-container">
       <div id="login-container">
         <h2 id="learn-heading">
-          Login to Fill Activity Tracker and Leaves Application{" "}
+          Login to Fill Productivity Tracker and Leaves Application{" "}
         </h2>
         <div id="signInDiv" className="custom-google-button"></div>
       </div>

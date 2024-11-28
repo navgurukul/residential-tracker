@@ -116,7 +116,7 @@ const Navbar = (props) => {
           marginBottom: "1rem",
         }}
       >
-        Residential Tracker
+        Productivity Tracker
       </h1>
       <Divider />
       <List>
@@ -149,8 +149,8 @@ const Navbar = (props) => {
             href: "https://docs.google.com/spreadsheets/d/1pfmdircPsvsxOZpTn7H9Scf3D3xtBwzSAPLqlw-oUyI/edit?gid=0#gid=0",
           },
           {
-            text: "Tracker Reports",
-            href: "https://docs.google.com/spreadsheets/d/1i8251CwxKATAhjLgDgMcbhJ6T4KMy1EaCOAuxRV2irQ/edit?gid=1381214364#gid=1381214364",
+            text: "Residential Reports",
+            href: "https://docs.google.com/spreadsheets/d/15L_SvtHvLo4bhXY-cO3NFTh2CLm5JT2SumrZLctfoe4/edit?gid=0#gid=0",
           },
         ].map((item, index) => (
           <ListItem key={item.text} disablePadding style={{
@@ -220,7 +220,7 @@ const Navbar = (props) => {
               <MenuIcon />
             </IconButton>
             <Typography variant="h6" noWrap component="div">
-              Daily Tracker
+            Productivity Tracker
             </Typography>
           </Toolbar>
         </div>

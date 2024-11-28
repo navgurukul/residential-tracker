@@ -20,7 +20,7 @@ const NoTabNavBar = () => {
           fontSize: "1.5rem",
         }}
       >
-        Welcome to Samyarth Daily Activities Tracker
+        Welcome to Residential Daily Productivity Tracker.
       </h1>
     </nav>
   );
