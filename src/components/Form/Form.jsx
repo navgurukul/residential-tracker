@@ -43,6 +43,11 @@ const Form = () => {
 
   const [projectData, setProjectData] = useState([]);
   const [selectedProject, setSelectedProject] = useState("");
+  const [campusData, setCampusData] = useState([]);
+  const [selectedCampus, setSelectedCampus] = useState("");
+  // const [managerData, setManagerData] = useState([]);
+  // const [selectedManager, setSelectedManager] = useState("");
+
   const [currentContribution, setCurrentContribution] = useState({
     hours: "0",
     task: "",
@@ -67,17 +72,31 @@ const Form = () => {
   const today = new Date().toISOString().split("T")[0];
   const [attempt, setAttempt] = useState(0);
   const [isDateDisabled, setIsDateDisabled] = useState(true);
-  
+
   useEffect(() => {
-    console.log(url,"72fgdf")
+    console.log(url, "72fgdf");
     let email = localStorage.getItem("email") ?? "";
+
+    fetch(`${url}?email=${email}&type=campus`)
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data, "CAMPUS data");
+        setCampusData(data[0].Campus || []);
+      });
+
+    // fetch(`${url}?email=${email}&type=managerName`)
+    //   .then((response) => response.json())
+    //   .then((data) => {
+    //     console.log(data[0].Managers, "Manager Array");
+    //     setManagerData(data[0].Managers || []);
+    //   });
 
     fetch(`${url}?email=${email}&type=attempts`)
       .then((response) => response.json())
       .then((data) => {
         setAttempt(data.attemptsLeft);
         localStorage.setItem("attemptsLeft", data.attemptsLeft);
-        setIsDateDisabled(false)
+        setIsDateDisabled(false);
       });
 
     const initPreviousEntries = () => {
@@ -179,7 +198,6 @@ const Form = () => {
   function checkMaxValue(input) {
     if (selectedProject === "Ad-hoc tasks") {
       if (input.value > 2) {
-
         input.value = 2;
       }
     }
@@ -293,7 +311,7 @@ const Form = () => {
       return;
     }
 
-    setSaved(false); 
+    setSaved(false);
     handleLoading(true);
     setLoading(true);
 
@@ -306,16 +324,17 @@ const Form = () => {
       .getMinutes()
       .toString()
       .padStart(2, "0")}:${submitTime
-        .getSeconds()
-        .toString()
-        .padStart(2, "0")}`;
+      .getSeconds()
+      .toString()
+      .padStart(2, "0")}`;
 
     const payload = {
       ...formData,
       timestamp: submitTimestamp,
+      campus: selectedCampus,
+      // manager: selectedManager,
     };
-    // console.log(payload)
-
+    console.log(payload);
     fetch(url, {
       method: "POST",
       headers: {
@@ -351,6 +370,18 @@ const Form = () => {
       ? (document.getElementById("root").style.opacity = "0.8")
       : (document.getElementById("root").style.opacity = "1");
   };
+
+  const handleCampusSelect = (e) => {
+    const campusValue = e.target.value; // Capture the selected campus value
+    setSelectedCampus(campusValue); // Correctly updating selectedCampus
+    console.log("Selected Campus:", campusValue); // Log the selected campus
+  };
+
+  // const handleManagerSelect = (e) => {
+  //   const managerValue = e.target.value;
+  //   setSelectedManager(managerValue);
+  //   console.log("Selected Manager:", managerValue);
+  // };
 
   function getMinDate() {
     const today = new Date();
@@ -429,7 +460,31 @@ const Form = () => {
             onChange={handleChange}
           />
         </div>
-
+        <div>
+          <label>Please select your campus : </label>
+          <select value={selectedCampus} onChange={handleCampusSelect}>
+            <option value="">--Select a campus--</option>
+            {campusData.map((campus, index) => (
+              <option key={index} value={campus.CampusName}>
+                {campus.CampusName}
+              </option>
+            ))}
+          </select>
+        </div>
+        {/* <div>
+          <label>Please select your manager:</label>
+          <select
+            value={selectedManager}
+            onChange={handleManagerSelect}
+          >
+            <option value="">--Select your manager--</option>
+            {managerData.map((manager, index) => (
+              <option key={index} value={manager.Manager}>
+                {manager.Manager}
+              </option>
+            ))}
+          </select>
+        </div> */}
         {formData.contributions.length > 0 && (
           <div>
             <h3>Contributions Summary</h3>
@@ -571,6 +626,7 @@ const Form = () => {
             </div>
           )}
         </div>
+
         <button type="submit" className="full-width-button">
           Submit
         </button>
