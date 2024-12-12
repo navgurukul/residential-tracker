@@ -310,6 +310,10 @@ const Form = () => {
       );
       return;
     }
+    if (!selectedCampus) {
+      setError("Please select a campus before submitting the form.");
+      return; 
+    }
 
     setSaved(false);
     handleLoading(true);
