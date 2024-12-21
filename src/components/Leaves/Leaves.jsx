@@ -11,11 +11,19 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  DialogContentText,
   DialogTitle,
   Button,
   Snackbar,
   Alert,
+} from "@mui/material";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
 } from "@mui/material";
 
 const Leaves = () => {
@@ -23,7 +31,7 @@ const Leaves = () => {
   const { email } = dataContext;
   const { loading, setLoading } = useLoader();
   const navigate = useNavigate();
-const [ leaveResult, setLeaveResult ] = useState();
+  const [leaveResult, setLeaveResult] = useState();
   const getTodayDate = () => {
     const today = new Date();
     const yyyy = today.getFullYear();
@@ -47,6 +55,9 @@ const [ leaveResult, setLeaveResult ] = useState();
   const [successMessage, setSuccessMessage] = useState("");
   const [availableLeaveTypes, setAvailableLeaveTypes] = useState();
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [leaveDetails, setLeaveDetails] = useState([]);
+
   useEffect(() => {
     if (!email) {
       navigate("/");
@@ -63,7 +74,9 @@ const [ leaveResult, setLeaveResult ] = useState();
 
   const fetchAvailableLeaveTypes = async () => {
     try {
-     const response = await fetch(`${url}?email=${email}&type=availableLeaves`)
+      const response = await fetch(
+        `${url}?email=${email}&type=availableLeaves`
+      );
       const result = await response.json();
       setLeaveResult(result);
 
@@ -71,9 +84,8 @@ const [ leaveResult, setLeaveResult ] = useState();
       const availableTypes = Object.keys(result).filter(
         (leaveType) => result[leaveType] > 0
       );
-      
 
-      const newResult =  Object.entries(result)
+      const newResult = Object.entries(result);
 
       console.log("Available lqiwgdouyasdoiua:", newResult);
       return availableTypes;
@@ -83,10 +95,9 @@ const [ leaveResult, setLeaveResult ] = useState();
     }
   };
 
-
   const handleChange = (e) => {
-    if(e.target.name === "leaveType")
-    setRemainingLeaves(leaveResult[e.target.value]);
+    if (e.target.name === "leaveType")
+      setRemainingLeaves(leaveResult[e.target.value]);
 
     const { name, value } = e.target;
     setLeaveData({
@@ -99,43 +110,43 @@ const [ leaveResult, setLeaveResult ] = useState();
     setHalfDay(e.target.checked);
   };
 
-const calculateNumberOfDays = (fromDate, toDate, halfDay) => {
-  const from = new Date(fromDate);
-  const to = new Date(toDate);
+  const calculateNumberOfDays = (fromDate, toDate, halfDay) => {
+    const from = new Date(fromDate);
+    const to = new Date(toDate);
 
-  let totalDays = 0;
-  let currentDate = new Date(from);
+    let totalDays = 0;
+    let currentDate = new Date(from);
 
-  while (currentDate <= to) {
-    const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 6 = Saturday
-    const dateOfMonth = currentDate.getDate();
-    const isSecondSaturday =
-      dayOfWeek === 6 && dateOfMonth >= 8 && dateOfMonth <= 14;
-    const isFourthSaturday =
-      dayOfWeek === 6 && dateOfMonth >= 22 && dateOfMonth <= 28;
+    while (currentDate <= to) {
+      const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 6 = Saturday
+      const dateOfMonth = currentDate.getDate();
+      const isSecondSaturday =
+        dayOfWeek === 6 && dateOfMonth >= 8 && dateOfMonth <= 14;
+      const isFourthSaturday =
+        dayOfWeek === 6 && dateOfMonth >= 22 && dateOfMonth <= 28;
 
-    if (dayOfWeek !== 0 && !isSecondSaturday && !isFourthSaturday) {
-      totalDays++;
+      if (dayOfWeek !== 0 && !isSecondSaturday && !isFourthSaturday) {
+        totalDays++;
+      }
+
+      // Move to the next day
+      currentDate.setDate(currentDate.getDate() + 1);
     }
 
-    // Move to the next day
-    currentDate.setDate(currentDate.getDate() + 1);
-  }
-
-  // Adjust for half-day deduction
-  if (halfDay) {
-    // If the range is only one day, deduct 0.5 day
-    if (from.getTime() === to.getTime()) {
-      totalDays -= 0.5;
+    // Adjust for half-day deduction
+    if (halfDay) {
+      // If the range is only one day, deduct 0.5 day
+      if (from.getTime() === to.getTime()) {
+        totalDays -= 0.5;
+      }
+      // Otherwise, deduct 0.5 for the start date
+      else if (from.getTime() !== to.getTime()) {
+        totalDays -= 0.5;
+      }
     }
-    // Otherwise, deduct 0.5 for the start date
-    else if (from.getTime() !== to.getTime()) {
-      totalDays -= 0.5;
-    }
-  }
 
-  return totalDays;
-};
+    return totalDays;
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -176,8 +187,8 @@ const calculateNumberOfDays = (fromDate, toDate, halfDay) => {
       .padStart(2, "0")}:${submitTime
       .getSeconds()
       .toString()
-        .padStart(2, "0")}`;
-    
+      .padStart(2, "0")}`;
+
     const leaveDataWithDays = {
       ...leaveData,
       numberOfDays,
@@ -223,10 +234,24 @@ const calculateNumberOfDays = (fromDate, toDate, halfDay) => {
     document.getElementById("root").style.opacity = load ? "0.8" : "1";
   };
 
+  // Dummy leave details - replace this with actual data
+  const sampleLeaveData = [
+    { leaveType: "Exam Leave", balance: 5, booked: 0, available: 5 },
+    { leaveType: "Casual Leave", balance: 7, booked: 7, available: 0 },
+    { leaveType: "Bereavement Leave", balance: 3, booked: 0, available: 3 },
+  ];
+
+  useEffect(() => {
+    // Simulating fetching data
+    setLeaveDetails(sampleLeaveData);
+  }, []);
+
+  const handleModalOpen = () => setIsModalOpen(true);
+  const handleModalClose = () => setIsModalOpen(false);
+
   return (
     <div
       style={{
-  
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
@@ -234,8 +259,6 @@ const calculateNumberOfDays = (fromDate, toDate, halfDay) => {
         width: "100%",
         height: "100%",
         // padding: "1rem",
-        
-        
       }}
     >
       <LoadingSpinner loading={loading} />
@@ -246,6 +269,7 @@ const calculateNumberOfDays = (fromDate, toDate, halfDay) => {
       <form onSubmit={handleSubmit} className="form-1">
         {error && <p style={{ color: "red" }}>{error}</p>}
         <div>
+          {/* <button style={{width:"150px", textAlign:"right"}} onClick={handleModalOpen}>View Leave Details</button> */}
           <div>
             <label>Employee Email:</label>
             <input
@@ -261,9 +285,8 @@ const calculateNumberOfDays = (fromDate, toDate, halfDay) => {
             Leave Type: &nbsp;
             {leaveData.leaveType ? (
               <span>
-                You have{" "}
-                <span style={{ color: "red" }}>{remainingLeaves}</span> leaves
-                available in this category
+                You have <span style={{ color: "red" }}>{remainingLeaves}</span>{" "}
+                leaves available in this category
               </span>
             ) : (
               ""
@@ -366,6 +389,45 @@ const calculateNumberOfDays = (fromDate, toDate, halfDay) => {
           {successMessage}
         </Alert>
       </Snackbar>
+
+      {/* Modal for Leave Details */}
+      <Dialog
+        open={isModalOpen}
+        onClose={handleModalClose}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>Leave Details</DialogTitle>
+        <DialogContent>
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Leave Type</TableCell>
+                  <TableCell align="center">Balance</TableCell>
+                  <TableCell align="center">Booked</TableCell>
+                  <TableCell align="center">Available</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {leaveDetails.map((row, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{row.leaveType}</TableCell>
+                    <TableCell align="center">{row.balance}</TableCell>
+                    <TableCell align="center">{row.booked}</TableCell>
+                    <TableCell align="center">{row.available}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleModalClose} color="secondary">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

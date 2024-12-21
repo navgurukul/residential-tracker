@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import "./Navbar.css"; // Import the CSS file
+import "./Navbar.css";
 import { useNavigate } from "react-router-dom";
 import { LoginContext } from "../context/LoginContext";
 import PropTypes from "prop-types";
@@ -17,24 +17,53 @@ import ListItemText from "@mui/material/ListItemText";
 import MenuIcon from "@mui/icons-material/Menu";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
-import MailIcon from "@mui/icons-material/Mail";
-import LogoutIcon from "@mui/icons-material/Logout"; // Import LogoutIcon
+import LogoutIcon from "@mui/icons-material/Logout";
 import FeedbackIcon from "@mui/icons-material/Feedback";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
-
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import ParkIcon from "@mui/icons-material/Park";
 import PostAddIcon from "@mui/icons-material/PostAdd";
+import LockIcon from "@mui/icons-material/Lock";
+import LockOpenIcon from "@mui/icons-material/LockOpen";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
+import InputAdornment from "@mui/material/InputAdornment";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import Alert from "@mui/material/Alert";
+import Snackbar from "@mui/material/Snackbar";
+
 const drawerWidth = 240;
+const AUTHORIZED_EMAILS = [
+  "priyanka@navgurukul.org",
+  // "shivansh@navgurukul.org",
+  // "arunesh@navgurukul.org",
+];
 
 const Navbar = (props) => {
   const { window } = props;
-  const [selected, setSelected] = useState(
-    localStorage.getItem("selectedButton") || "daily-tracker"
-  );
   const navigate = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [openPasswordDialog, setOpenPasswordDialog] = useState(false);
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+
+  const dataContext = useContext(LoginContext);
+  const { email, setEmail } = dataContext;
+
+  const isAuthorizedEmail = () => {
+    const userEmail = localStorage.getItem("email");
+    return AUTHORIZED_EMAILS.includes(userEmail);
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -61,49 +90,67 @@ const Navbar = (props) => {
     setDrawerOpen(false);
   };
 
-  const dataContext = useContext(LoginContext);
-  const { email, setEmail } = dataContext;
+  const handlePasswordDialogOpen = () => {
+    setOpenPasswordDialog(true);
+    setError("");
+  };
 
-  useEffect(() => {
-    if (email) {
-      localStorage.setItem("selectedButton", selected);
-      if (selected === "daily-tracker") {
-        navigate("/activity-tracker");
+  const handlePasswordDialogClose = () => {
+    setOpenPasswordDialog(false);
+    setPassword("");
+    setShowPassword(false);
+    setError("");
+  };
+
+  const handlePasswordSubmit = () => {
+    if (password === "Think4Big$123") {
+      if (isAuthorizedEmail()) {
+        sessionStorage.setItem("isAuth", "true");
+        handlePasswordDialogClose();
+        navigate("comp-off-application");
+        setError("");
+        setSnackbarSeverity("success");
+        setSnackbarMessage("Successfully authenticated!");
+        setSnackbarOpen(true);
+      } else {
+        setError("You are not authorized to access this feature");
+        setSnackbarSeverity("error");
+        setSnackbarMessage("You are not authorized to access this feature");
+        setSnackbarOpen(true);
       }
     } else {
-      localStorage.removeItem("selectedButton");
-      navigate("/");
+      setError("Incorrect password");
     }
-  }, [selected, navigate, email]);
-
-  useEffect(() => {
-    const storedSelected = localStorage.getItem("selectedButton");
-    if (storedSelected === "leave-app") {
-      navigate("/leaves");
-    } else if (storedSelected === "comp-off") {
-      navigate("/comp_off");
-    }
-  }, [navigate]);
+  };
 
   const handleClick = (button) => {
+    console.log("Handleclick", button);
     if (button === "logout") {
       localStorage.clear();
+      sessionStorage.clear();
       setEmail("");
       return navigate("/");
     }
-    const newSelection = button === "" ? "daily-tracker" : button;
-    setSelected(newSelection);
+
+    if (button === "comp-off-application") {
+      if (!isAuthorizedEmail()) {
+        setSnackbarSeverity("info");
+        setSnackbarMessage(
+          "Comp-off requests need to be approved by Priyanka. Please reach out to priyanka@navgurukul.org before raising a request."
+        );
+        setSnackbarOpen(true);
+        return;
+      }
+      handlePasswordDialogOpen();
+      return;
+    }
+
     navigate(`/${button}`);
     handleDrawerClose();
   };
 
   const drawer = (
-    <div
-      style={{
-        marginTop: "1rem",
-        padding: "none",
-      }}
-    >
+    <div style={{ marginTop: "1rem", padding: "none" }}>
       <h1
         className="heading"
         style={{
@@ -116,30 +163,42 @@ const Navbar = (props) => {
           marginBottom: "1rem",
         }}
       >
-        Productivity Tracker
+        Daily Tracker
       </h1>
       <Divider />
       <List>
-        {["Activity Tracker", "Leave Application", "Comp-off Application"].map(
-          (text, index) => (
-            <ListItem key={text} disablePadding style={{
-              marginTop: "0.5rem",
-            }}>
-              <ListItemButton
-                onClick={() =>
-                  handleClick(text.toLowerCase().replace(" ", "-"))
-                }
-              >
-                <ListItemIcon>
-                  {index === 0 && <AssessmentIcon />}
-                  {index === 1 && <ParkIcon />}
-                  {index === 2 && <PostAddIcon />}
-                </ListItemIcon>
-                <ListItemText primary={text} />
-              </ListItemButton>
-            </ListItem>
-          )
-        )}
+        {[
+          { text: "Activity Tracker", icon: <AssessmentIcon /> },
+          { text: "Leave Application", icon: <ParkIcon /> },
+          {
+            text: "Comp-off Application",
+            icon: isAuthorizedEmail() ? <LockOpenIcon /> : <LockIcon />,
+            // disabled: !isAuthorizedEmail(),
+          },
+          { text: "Monthly Activity-Dashboard", icon: <AssessmentIcon /> },
+        ].map((item, index) => (
+          <ListItem
+            key={item.text}
+            disablePadding
+            style={{ marginTop: "0.5rem" }}
+          >
+            <ListItemButton
+              onClick={() =>
+                handleClick(item.text.toLowerCase().replace(" ", "-"))
+              }
+              // disabled={item.disabled}
+              sx={{
+                opacity: item.disabled ? 0.5 : 1,
+                "&.Mui-disabled": {
+                  opacity: 0.5,
+                },
+              }}
+            >
+              <ListItemIcon>{item.icon}</ListItemIcon>
+              <ListItemText primary={item.text} />
+            </ListItemButton>
+          </ListItem>
+        ))}
       </List>
       <Divider />
       <List>
@@ -149,13 +208,15 @@ const Navbar = (props) => {
             href: "https://docs.google.com/spreadsheets/d/1pfmdircPsvsxOZpTn7H9Scf3D3xtBwzSAPLqlw-oUyI/edit?gid=0#gid=0",
           },
           {
-            text: "Residential Reports",
-            href: "https://docs.google.com/spreadsheets/d/15L_SvtHvLo4bhXY-cO3NFTh2CLm5JT2SumrZLctfoe4/edit?gid=0#gid=0",
+            text: "Tracker Reports",
+            href: "https://docs.google.com/spreadsheets/d/1i8251CwxKATAhjLgDgMcbhJ6T4KMy1EaCOAuxRV2irQ/edit?gid=1381214364#gid=1381214364",
           },
         ].map((item, index) => (
-          <ListItem key={item.text} disablePadding style={{
-            marginTop: "0.5rem",
-          }}>
+          <ListItem
+            key={item.text}
+            disablePadding
+            style={{ marginTop: "0.5rem" }}
+          >
             <ListItemButton component="a" href={item.href} target="_blank">
               <ListItemIcon>
                 {index % 2 === 0 ? <FeedbackIcon /> : <MenuBookIcon />}
@@ -174,10 +235,9 @@ const Navbar = (props) => {
         }}
       >
         <ListItem disablePadding>
-          <ListItemButton 
-          
+          <ListItemButton
             onClick={() => handleClick("logout")}
-            sx={{ marginTop: "auto", }} // Style for logout button
+            sx={{ marginTop: "auto" }}
           >
             <ListItemIcon>
               <LogoutIcon />
@@ -202,8 +262,7 @@ const Navbar = (props) => {
           ml: { md: `${drawerWidth}px` },
         }}
       >
-        {/* {isMobile ? ( */}
-        <div class="responsive-div">
+        <div className="responsive-div">
           <Toolbar
             style={{
               backdropFilter: "blur(10px)",
@@ -220,16 +279,15 @@ const Navbar = (props) => {
               <MenuIcon />
             </IconButton>
             <Typography variant="h6" noWrap component="div">
-            Productivity Tracker
+              Daily Tracker
             </Typography>
           </Toolbar>
         </div>
-        {/* ) : null}  */}
       </AppBar>
+
       <Box
         component="nav"
         sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
-        aria-label="mailbox folders"
       >
         <Drawer
           container={container}
@@ -237,7 +295,7 @@ const Navbar = (props) => {
           open={drawerOpen}
           onClose={handleDrawerClose}
           ModalProps={{
-            keepMounted: true, // Better open performance on mobile.
+            keepMounted: true,
           }}
           sx={{
             display: { xs: "block", md: "none" },
@@ -263,22 +321,67 @@ const Navbar = (props) => {
           {drawer}
         </Drawer>
       </Box>
-      {/* <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 3,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-        }}
+
+      <Dialog open={openPasswordDialog} onClose={handlePasswordDialogClose}>
+        <DialogTitle>Enter Password</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Password"
+            type={showPassword ? "text" : "password"}
+            fullWidth
+            variant="outlined"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            error={!!error}
+            helperText={error}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="toggle password visibility"
+                    onClick={() => setShowPassword(!showPassword)}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            onKeyPress={(e) => {
+              if (e.key === "Enter") {
+                handlePasswordSubmit();
+              }
+            }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handlePasswordDialogClose}>Cancel</Button>
+          <Button onClick={handlePasswordSubmit}>Submit</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
       >
-        <Toolbar />
-      </Box> */}
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
+          severity={snackbarSeverity}
+          
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
 
-// Navbar.propTypes = {
-//   window: PropTypes.func,
-// };
+Navbar.propTypes = {
+  window: PropTypes.func,
+};
 
 export default Navbar;
