@@ -175,7 +175,7 @@ const Navbar = (props) => {
             icon: isAuthorizedEmail() ? <LockOpenIcon /> : <LockIcon />,
             // disabled: !isAuthorizedEmail(),
           },
-          { text: "Monthly Activity-Dashboard", icon: <AssessmentIcon /> },
+          // { text: "Monthly Activity-Dashboard", icon: <AssessmentIcon /> },
         ].map((item, index) => (
           <ListItem
             key={item.text}
@@ -209,7 +209,7 @@ const Navbar = (props) => {
           },
           {
             text: "Tracker Reports",
-            href: "https://docs.google.com/spreadsheets/d/1i8251CwxKATAhjLgDgMcbhJ6T4KMy1EaCOAuxRV2irQ/edit?gid=1381214364#gid=1381214364",
+            href: "https://docs.google.com/spreadsheets/d/15L_SvtHvLo4bhXY-cO3NFTh2CLm5JT2SumrZLctfoe4/edit?gid=0#gid=0",
           },
         ].map((item, index) => (
           <ListItem
