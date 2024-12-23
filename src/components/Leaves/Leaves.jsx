@@ -235,15 +235,49 @@ const Leaves = () => {
   };
 
   // Dummy leave details - replace this with actual data
-  const sampleLeaveData = [
-    { leaveType: "Exam Leave", balance: 5, booked: 0, available: 5 },
-    { leaveType: "Casual Leave", balance: 7, booked: 7, available: 0 },
-    { leaveType: "Bereavement Leave", balance: 3, booked: 0, available: 3 },
-  ];
+  // const sampleLeaveData = [
+  //   { leaveType: "Exam Leave", balance: 5, booked: 0, available: 5 },
+  //   { leaveType: "Casual Leave", balance: 7, booked: 7, available: 0 },
+  //   { leaveType: "Bereavement Leave", balance: 3, booked: 0, available: 3 },
+  // ];
+
+  const apiUrl = `https://script.google.com/macros/s/AKfycbyjEdP-0Q-vdtR8bU0wtgxghfqS_AVHc2dKRUTjjbuzLcdmt81f9lru5AnTF-B5gEum/exec?email=${email}&&type=balanceleave`;
+
+  const fetchLeaveDetails = async () => {
+    try {
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+      console.log("Fetched leave details:", data);
+
+      // If the response is an object, convert it to an array
+      // and ignore "currentDate"
+      if (data && typeof data === "object" && !Array.isArray(data)) {
+        const transformed = Object.entries(data)
+          .filter(([key]) => key !== "currentDate") // Exclude currentDate
+          .map(([leaveType, leaveObj]) => ({
+            // Convert { balanced, booked, available }
+            // into the row shape your table expects
+            leaveType,
+            balance: leaveObj.balanced ?? 0,
+            booked: leaveObj.booked ?? 0,
+            available: leaveObj.available ?? 0,
+          }));
+        setLeaveDetails(transformed);
+      } else if (Array.isArray(data)) {
+        // If the server was already returning an array
+        setLeaveDetails(data);
+      } else {
+        // If something else, fallback
+        setLeaveDetails([]);
+      }
+    } catch (error) {
+      console.error("Error fetching leave details:", error);
+      setLeaveDetails([]);
+    }
+  };
 
   useEffect(() => {
-    // Simulating fetching data
-    setLeaveDetails(sampleLeaveData);
+    fetchLeaveDetails();
   }, []);
 
   const handleModalOpen = () => setIsModalOpen(true);
@@ -269,7 +303,12 @@ const Leaves = () => {
       <form onSubmit={handleSubmit} className="form-1">
         {error && <p style={{ color: "red" }}>{error}</p>}
         <div>
-          {/* <button style={{width:"150px", textAlign:"right"}} onClick={handleModalOpen}>View Leave Details</button> */}
+          <button
+            style={{ width: "150px", textAlign: "right" }}
+            onClick={handleModalOpen}
+          >
+            View Leave Details
+          </button>
           <div>
             <label>Employee Email:</label>
             <input
@@ -410,23 +449,19 @@ const Leaves = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {leaveDetails.map((row, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{row.leaveType}</TableCell>
-                    <TableCell align="center">{row.balance}</TableCell>
-                    <TableCell align="center">{row.booked}</TableCell>
-                    <TableCell align="center">{row.available}</TableCell>
-                  </TableRow>
-                ))}
+                {Array.isArray(leaveDetails) &&
+                  leaveDetails.map((row, index) => (
+                    <TableRow key={index} tabIndex={-1}>
+                      <TableCell >{row.leaveType}</TableCell>
+                      <TableCell  align="center">{row.balance}</TableCell>
+                      <TableCell  align="center">{row.booked}</TableCell>
+                      <TableCell  align="center">{row.available}</TableCell>
+                    </TableRow>
+                  ))}
               </TableBody>
             </Table>
           </TableContainer>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleModalClose} color="secondary">
-            Close
-          </Button>
-        </DialogActions>
       </Dialog>
     </div>
   );
