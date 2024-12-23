@@ -175,7 +175,7 @@ const Navbar = (props) => {
             icon: isAuthorizedEmail() ? <LockOpenIcon /> : <LockIcon />,
             // disabled: !isAuthorizedEmail(),
           },
-          // { text: "Monthly Activity-Dashboard", icon: <AssessmentIcon /> },
+          { text: "Monthly Activity-Dashboard", icon: <AssessmentIcon /> },
         ].map((item, index) => (
           <ListItem
             key={item.text}
