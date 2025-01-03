@@ -32,6 +32,8 @@ const Leaves = () => {
   const { loading, setLoading } = useLoader();
   const navigate = useNavigate();
   const [leaveResult, setLeaveResult] = useState();
+  const [hasAppliedToday, setHasAppliedToday] = useState(false);
+
   const getTodayDate = () => {
     const today = new Date();
     const yyyy = today.getFullYear();
@@ -58,6 +60,18 @@ const Leaves = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [leaveDetails, setLeaveDetails] = useState([]);
 
+  const checkTodayLeaveApplication = async () => {
+    try {
+      const response = await fetch(
+        `${url}?email=${email}&type=checkTodayLeave&date=${getTodayDate()}`
+      );
+      const result = await response.json();
+      setHasAppliedToday(result.hasApplied);
+    } catch (error) {
+      console.error("Error checking today's leave application:", error);
+    }
+  };
+
   useEffect(() => {
     if (!email) {
       navigate("/");
@@ -65,6 +79,7 @@ const Leaves = () => {
       fetchAvailableLeaveTypes().then((types) => {
         setAvailableLeaveTypes(types);
       });
+      checkTodayLeaveApplication();
     }
   }, [email, navigate]);
 
@@ -96,14 +111,31 @@ const Leaves = () => {
   };
 
   const handleChange = (e) => {
-    if (e.target.name === "leaveType")
-      setRemainingLeaves(leaveResult[e.target.value]);
-
     const { name, value } = e.target;
-    setLeaveData({
-      ...leaveData,
-      [name]: value,
-    });
+
+    if (name === "leaveType") {
+      const leaves = leaveResult[value];
+      setRemainingLeaves(leaves);
+
+      // Reset toDate when leaveType changes
+      setLeaveData((prev) => ({
+        ...prev,
+        [name]: value,
+        toDate: prev.fromDate, // Reset toDate to fromDate
+      }));
+    } else if (name === "fromDate") {
+      const maxEndDate = calculateMaxEndDate(value, remainingLeaves);
+      setLeaveData((prev) => ({
+        ...prev,
+        fromDate: value,
+        toDate: value, // Reset toDate to new fromDate
+      }));
+    } else {
+      setLeaveData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   const handleHalfDayChange = (e) => {
@@ -151,6 +183,11 @@ const Leaves = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    if (hasAppliedToday) {
+      setError("You have already applied for leave today.");
+      return;
+    }
+  
     setLoading(true);
     handleLoading(true);
     if (
@@ -209,6 +246,7 @@ const Leaves = () => {
       .then((response) => response.text())
       .then((data) => {
         setSuccessMessage("Leave request submitted successfully!");
+        setHasAppliedToday(true);
         setLeaveData({
           type: "leave",
           leaveType: "",
@@ -283,6 +321,40 @@ const Leaves = () => {
   const handleModalOpen = () => setIsModalOpen(true);
   const handleModalClose = () => setIsModalOpen(false);
 
+  const calculateMaxEndDate = (startDate, availableLeaves) => {
+    if (!startDate || !availableLeaves) return null;
+
+    const start = new Date(startDate);
+    let currentDate = new Date(start);
+    let daysToAdd = 0;
+    let leavesCount = 0;
+
+    while (leavesCount < availableLeaves) {
+      const dayOfWeek = currentDate.getDay();
+      const dateOfMonth = currentDate.getDate();
+      const isSecondSaturday =
+        dayOfWeek === 6 && dateOfMonth >= 8 && dateOfMonth <= 14;
+      const isFourthSaturday =
+        dayOfWeek === 6 && dateOfMonth >= 22 && dateOfMonth <= 28;
+
+      // Only count if it's a working day
+      if (dayOfWeek !== 0 && !isSecondSaturday && !isFourthSaturday) {
+        leavesCount++;
+      }
+
+      if (leavesCount < availableLeaves) {
+        daysToAdd++;
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+    }
+
+    const maxDate = new Date(start);
+    maxDate.setDate(maxDate.getDate() + daysToAdd);
+
+    // Format the date to YYYY-MM-DD
+    return maxDate.toISOString().split("T")[0];
+  };
+
   return (
     <div
       style={{
@@ -296,6 +368,23 @@ const Leaves = () => {
       }}
     >
       <LoadingSpinner loading={loading} />
+      {hasAppliedToday && (
+        <div
+          style={{
+            color: "red",
+            backgroundColor: "#ffebee",
+            padding: "1rem",
+            borderRadius: "4px",
+            marginBottom: "1rem",
+            width: "80%",
+            textAlign: "center",
+            fontWeight: "bold",
+          }}
+        >
+          You have already applied for leave today. You can only submit one
+          leave application per day.
+        </div>
+      )}
       <h1 style={{ textAlign: "center" }}>Leave Application Form</h1>
       <p style={{ textAlign: "center" }}>
         Make sure to check the leave balance before applying
@@ -375,6 +464,8 @@ const Leaves = () => {
             name="toDate"
             value={leaveData.toDate}
             onChange={handleChange}
+            min={leaveData.fromDate}
+            max={calculateMaxEndDate(leaveData.fromDate, remainingLeaves)}
             required
           />
         </div>
@@ -412,7 +503,17 @@ const Leaves = () => {
           />
         </div>
 
-        <button type="submit">Submit</button>
+        {/* <button type="submit">Submit</button> */}
+        <button
+          type="submit"
+          disabled={hasAppliedToday}
+          style={{
+            opacity: hasAppliedToday ? 0.5 : 1,
+            cursor: hasAppliedToday ? "not-allowed" : "pointer",
+          }}
+        >
+          Submit
+        </button>
       </form>
       <Snackbar
         open={successMessage}
