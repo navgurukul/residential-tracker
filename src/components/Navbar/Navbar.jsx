@@ -40,6 +40,9 @@ import Snackbar from "@mui/material/Snackbar";
 const drawerWidth = 240;
 const AUTHORIZED_EMAILS = [
   "priyanka@navgurukul.org",
+  "pranjali@navgurukul.org",
+  "prabhat@navgurukul.org",
+
   // "shivansh@navgurukul.org",
   // "arunesh@navgurukul.org",
 ];
@@ -103,7 +106,7 @@ const Navbar = (props) => {
   };
 
   const handlePasswordSubmit = () => {
-    if (password === "Think4Big$123") {
+    if (password === "Residential@$123") {
       if (isAuthorizedEmail()) {
         sessionStorage.setItem("isAuth", "true");
         handlePasswordDialogClose();

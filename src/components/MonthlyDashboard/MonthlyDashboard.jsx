@@ -22,15 +22,13 @@ const MonthlyDashboard = () => {
   const [error, setError] = useState(null);
   const [selectedDay, setSelectedDay] = useState(null);
 
-const getDaysInMonth = () => {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
+  const getDaysInMonth = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    
 
-  // Get only current month's days
-  const currentMonthDays = Array.from({ length: daysInMonth }, (_, i) => {
+    const currentMonthDays = Array.from({ length: daysInMonth }, (_, i) => {
       const date = new Date(year, month, i + 1);
       console.log(date);
       return (
@@ -40,19 +38,43 @@ const getDaysInMonth = () => {
         "-" +
         String(date.getDate()).padStart(2, "0")
       );
-  });
+    });
 
-  return currentMonthDays;
-}; 
-    console.log(getDaysInMonth());
-    let email = localStorage.getItem("email") ?? "";
+    return currentMonthDays;
+  };
 
-    const getMonthAndYear = () => {
-      const now = new Date();
-      return now.toLocaleString("default", { month: "long", year: "numeric" });
-    };
+  const isPastDate = (dateStr) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const checkDate = new Date(dateStr);
+    return checkDate < today;
+  };
 
+  const isWeekendException = (date) => {
+    const dayOfWeek = new Date(date).getDay();
+    const dayOfMonth = new Date(date).getDate();
     
+    // Check if it's a Sunday (0)
+    if (dayOfWeek === 0) return true;
+    
+    // Check if it's a Saturday (6)
+    if (dayOfWeek === 6) {
+      // Calculate which Saturday of the month it is
+      const weekNumber = Math.ceil(dayOfMonth / 7);
+      // Return true if it's 2nd or 4th Saturday
+      return weekNumber === 2 || weekNumber === 4;
+    }
+    
+    return false;
+  };
+
+  let email = localStorage.getItem("email") ?? "";
+
+  const getMonthAndYear = () => {
+    const now = new Date();
+    return now.toLocaleString("default", { month: "long", year: "numeric" });
+  };
+
   const currentMonthYear = getMonthAndYear();
 
   useEffect(() => {
@@ -62,7 +84,7 @@ const getDaysInMonth = () => {
           `https://script.google.com/macros/s/AKfycbyjEdP-0Q-vdtR8bU0wtgxghfqS_AVHc2dKRUTjjbuzLcdmt81f9lru5AnTF-B5gEum/exec?email=${email}&&type=getEmployeeData`
         );
         const data = await response.json();
-        console.log(data,"dashboard ujala")
+        console.log(data, "dashboard ujala");
         setEmployeeData(data);
         setLoading(false);
       } catch (err) {
@@ -81,12 +103,14 @@ const getDaysInMonth = () => {
         (activity) => activity["Activity Date"] === date
       ) || [];
 
-    const leaves =
-      employeeData.leaves?.filter((leave) => {
-        const fromDate = leave["From date"];
-        const toDate = leave["To Date"];
-        return date >= fromDate && date <= toDate;
-      }) || [];
+    // Only show leaves if the date is not a weekend exception
+    const leaves = isWeekendException(date)
+      ? []  // Return empty array for weekend exceptions
+      : employeeData.leaves?.filter((leave) => {
+          const fromDate = leave["From date"];
+          const toDate = leave["To Date"];
+          return date >= fromDate && date <= toDate;
+        }) || [];
 
     return { activities, leaves };
   };
@@ -125,6 +149,7 @@ const getDaysInMonth = () => {
         {getDaysInMonth().map((date, index) => {
           const { activities, leaves } = getDataForDate(date);
           const dayOfWeek = new Date(date).getDay();
+          const shouldBlink = !isWeekendException(date) && activities.length === 0 && leaves.length === 0 && isPastDate(date);
 
           if (index === 0) {
             const emptyCells = Array(dayOfWeek).fill(null);
@@ -137,6 +162,7 @@ const getDaysInMonth = () => {
                 date={date}
                 activities={activities}
                 leaves={leaves}
+                shouldBlink={shouldBlink}
                 onSelect={() =>
                   activities.length > 0 || leaves.length > 0
                     ? setSelectedDay({ date, activities, leaves })
@@ -152,6 +178,7 @@ const getDaysInMonth = () => {
               date={date}
               activities={activities}
               leaves={leaves}
+              shouldBlink={shouldBlink}
               onSelect={() =>
                 activities.length > 0 || leaves.length > 0
                   ? setSelectedDay({ date, activities, leaves })
@@ -172,7 +199,7 @@ const getDaysInMonth = () => {
   );
 };
 
-const DayCell = ({ date, activities = [], leaves = [], onSelect }) => {
+const DayCell = ({ date, activities = [], leaves = [], onSelect, shouldBlink }) => {
   const isToday =
     new Date(date).toISOString().split("T")[0] ===
     new Date().toISOString().split("T")[0];
@@ -188,7 +215,7 @@ const DayCell = ({ date, activities = [], leaves = [], onSelect }) => {
     <Card
       className={`day-cell ${isToday ? "today" : ""} ${
         hasData ? "has-activities" : ""
-      }`}
+      } ${shouldBlink ? "blink-border" : ""}`}
       onClick={onSelect}
     >
       <CardContent className="day-content">
@@ -236,6 +263,11 @@ const DayCell = ({ date, activities = [], leaves = [], onSelect }) => {
               +{activities.length + leaves.length - maxDisplayItems} more
             </Typography>
           )}
+          {shouldBlink && (
+            <Typography className="missing-activity">
+              <strong>Missing Entry</strong>  
+            </Typography>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -251,6 +283,25 @@ const DayDetailsDialog = ({ selectedDay, onClose }) => {
       day: "numeric",
     });
   };
+
+  const isWeekendException = (date) => {
+    const dayOfWeek = new Date(date).getDay();
+    const dayOfMonth = new Date(date).getDate();
+    
+    if (dayOfWeek === 0) return true;
+    
+    if (dayOfWeek === 6) {
+      const weekNumber = Math.ceil(dayOfMonth / 7);
+      return weekNumber === 2 || weekNumber === 4;
+    }
+    
+    return false;
+  };
+
+  // Filter out leaves for weekend exceptions
+  const displayLeaves = isWeekendException(selectedDay.date) 
+    ? []
+    : selectedDay.leaves;
 
   return (
     <Dialog
@@ -269,8 +320,8 @@ const DayDetailsDialog = ({ selectedDay, onClose }) => {
               (sum, act) => sum + (act["Time Spent"] || 0),
               0
             )}
-            {selectedDay.leaves.length > 0 &&
-              ` | Leaves: ${selectedDay.leaves.length}`}
+            {displayLeaves.length > 0 &&
+              ` | Leaves: ${displayLeaves.length}`}
           </Typography>
         </div>
         <IconButton onClick={onClose} size="small">
@@ -278,12 +329,12 @@ const DayDetailsDialog = ({ selectedDay, onClose }) => {
         </IconButton>
       </DialogTitle>
       <DialogContent>
-        {selectedDay.leaves.length > 0 && (
+        {displayLeaves.length > 0 && (
           <div className="leaves-section">
             <Typography variant="h6" className="section-title">
               Leaves
             </Typography>
-            {selectedDay.leaves.map((leave, index) => (
+            {displayLeaves.map((leave, index) => (
               <Card key={`leave-${index}`} className="leave-detail-card">
                 <CardContent>
                   <Typography variant="subtitle1" className="leave-type">
