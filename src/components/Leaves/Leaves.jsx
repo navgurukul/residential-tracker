@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import "./Leaves.css";
 import { useNavigate } from "react-router-dom";
 import url from "../../../public/api";
@@ -33,6 +33,7 @@ const Leaves = () => {
   const navigate = useNavigate();
   const [leaveResult, setLeaveResult] = useState();
   const [hasAppliedToday, setHasAppliedToday] = useState(false);
+  const hasSubmittedOnce = useRef(false); // Ref to track submission
 
   const getTodayDate = () => {
     const today = new Date();
@@ -60,13 +61,27 @@ const Leaves = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [leaveDetails, setLeaveDetails] = useState([]);
 
+  const submissionTrack = async () => {
+    console.log("TRIGGERED");
+    try {
+      const response = await fetch(
+        `${url}?email=${email}&type=submissionTrack`
+      );
+      const result = await response.json();
+      console.log(result.automationFlag, "all leave data");
+      setHasAppliedToday(result?.automationFlag);
+    } catch (error) {
+      console.error("Error checking today's leave application:", error);
+    }
+  };
+
   const checkTodayLeaveApplication = async () => {
     try {
       const response = await fetch(
         `${url}?email=${email}&type=checkTodayLeave&date=${getTodayDate()}`
       );
       const result = await response.json();
-      setHasAppliedToday(result.hasApplied);
+      setHasAppliedToday(result?.automationFlag);
     } catch (error) {
       console.error("Error checking today's leave application:", error);
     }
@@ -318,6 +333,17 @@ const Leaves = () => {
     fetchLeaveDetails();
   }, []);
 
+  useEffect(() => {
+    fetchLeaveDetails();
+
+    if (!hasSubmittedOnce.current) {
+      hasSubmittedOnce.current = true; // Set flag immediately to prevent multiple triggers
+
+      setTimeout(() => {
+        submissionTrack(); // Trigger the function after a 3-second delay
+      }, 2000);
+    }
+  }, []);
   const handleModalOpen = () => setIsModalOpen(true);
   const handleModalClose = () => setIsModalOpen(false);
 
