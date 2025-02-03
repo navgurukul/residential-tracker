@@ -39,12 +39,14 @@ import Snackbar from "@mui/material/Snackbar";
 
 const drawerWidth = 240;
 const AUTHORIZED_EMAILS = [
+  "prachi@navgurukul.org",
   "priyanka@navgurukul.org",
-  "pranjali@navgurukul.org",
-  "prabhat@navgurukul.org",
-
-  // "shivansh@navgurukul.org",
-  // "arunesh@navgurukul.org",
+  "Bilqees@navgurukul.org",
+  "dewangana@navgurukul.org",
+  "nilam@navgurukul.org",
+  "shivanisuji@navgurukul.org",
+  "meenakshi.dilip@navgurukul.org",
+  "ujala@navgurukul.org",
 ];
 
 const Navbar = (props) => {
@@ -374,7 +376,7 @@ const Navbar = (props) => {
         <Alert
           onClose={() => setSnackbarOpen(false)}
           severity={snackbarSeverity}
-          
+
         >
           {snackbarMessage}
         </Alert>

@@ -97,6 +97,10 @@ const CompOff = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    if (email===leaveData.email){
+      setError("You are not allowed to apply for yourself.")
+      return;
+    }
     setLoading(true);
     handleLoading(true);
     if (
@@ -193,6 +197,7 @@ const CompOff = () => {
               value={leaveData.email}
               onChange={handleChange}
               required
+              disabled={leaveData.email === email}
             />
           </div>
         </div>
