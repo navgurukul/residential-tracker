@@ -33,8 +33,9 @@ const Leaves = () => {
   const navigate = useNavigate();
   const [leaveResult, setLeaveResult] = useState();
   const [hasAppliedToday, setHasAppliedToday] = useState(false);
-  const hasSubmittedOnce = useRef(false); // Ref to track submission
-
+  const hasSubmittedOnce = useRef(false);
+  const [campusData, setCampusData] = useState([]);
+  const [selectedCampus, setSelectedCampus] = useState("");
   const getTodayDate = () => {
     const today = new Date();
     const yyyy = today.getFullYear();
@@ -50,6 +51,7 @@ const Leaves = () => {
     fromDate: getTodayDate(),
     toDate: getTodayDate(),
     email: email,
+    campus: "",
   });
 
   const [remainingLeaves, setRemainingLeaves] = useState();
@@ -60,7 +62,23 @@ const Leaves = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [leaveDetails, setLeaveDetails] = useState([]);
-
+  // Fetch campus data
+  useEffect(() => {
+    const fetchCampusData = async () => {
+      try {
+        const response = await fetch(`${url}?email=${email}&type=campus`);
+        const data = await response.json();
+        console.log("Campus data:", data);
+        setCampusData(data[0]?.Campus || []);
+      } catch (error) {
+        console.error("Error fetching campus data:", error);
+        setCampusData([]);
+      }
+    };
+    if (email) {
+      fetchCampusData();
+    }
+  }, [email]);
   const submissionTrack = async () => {
     console.log("TRIGGERED");
     try {
@@ -75,17 +93,18 @@ const Leaves = () => {
     }
   };
 
-  const checkTodayLeaveApplication = async () => {
-    try {
-      const response = await fetch(
-        `${url}?email=${email}&type=checkTodayLeave&date=${getTodayDate()}`
-      );
-      const result = await response.json();
-      setHasAppliedToday(result?.automationFlag);
-    } catch (error) {
-      console.error("Error checking today's leave application:", error);
-    }
-  };
+  // const checkTodayLeaveApplication = async () => {
+  //   try {
+  //     const response = await fetch(
+  //       `${url}?email=${email}&type=checkTodayLeave&date=${getTodayDate()}`
+  //     );
+  //     const result = await response.json();
+  //     console.log(result, "checkTodayLeaveApplication");
+  //     setHasAppliedToday(result?.automationFlag);
+  //   } catch (error) {
+  //     console.error("Error checking today's leave application:", error);
+  //   }
+  // };
 
   useEffect(() => {
     if (!email) {
@@ -94,7 +113,7 @@ const Leaves = () => {
       fetchAvailableLeaveTypes().then((types) => {
         setAvailableLeaveTypes(types);
       });
-      checkTodayLeaveApplication();
+      // checkTodayLeaveApplication();
     }
   }, [email, navigate]);
 
@@ -205,6 +224,12 @@ const Leaves = () => {
   
     setLoading(true);
     handleLoading(true);
+    // Check if a campus is selected
+    if (!selectedCampus) {
+      setError("Please select a campus before submitting the form.");
+      return;
+    }
+    // Check if all fields are filled
     if (
       !leaveData.leaveType ||
       !leaveData.reason ||
@@ -218,13 +243,14 @@ const Leaves = () => {
       return;
     }
 
+    // Check if the selected leave type is available
     if (!availableLeaveTypes.includes(leaveData.leaveType)) {
       setError("Selected leave type is not available.");
       setLoading(false);
       return;
     }
 
-    // Calculate the number of days
+    // Calculate the number of leave days
     const numberOfDays = calculateNumberOfDays(
       leaveData.fromDate,
       leaveData.toDate,
@@ -241,25 +267,29 @@ const Leaves = () => {
       .toString()
       .padStart(2, "0")}`;
 
-    const leaveDataWithDays = {
+    // Prepare the payload for submission
+    const leaveDataWithDetails = {
       ...leaveData,
       numberOfDays,
       timestamp: submitTimestamp,
-      //  managerEmail: "alpanachavan20@navgurukul.org"
+      campus: selectedCampus, // Add campus to the payload
     };
 
-    setError(""); // Clear any previous error messages
+    // Reset error state
+    setError("");
+    console.log("Payload sent to Google Apps Script:", leaveDataWithDetails);
 
+    // Send data to Google Apps Script
     fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(leaveDataWithDays),
+      body: JSON.stringify(leaveDataWithDetails),
       mode: "no-cors",
     })
       .then((response) => response.text())
-      .then((data) => {
+      .then(() => {
         setSuccessMessage("Leave request submitted successfully!");
         setHasAppliedToday(true);
         setLeaveData({
@@ -269,7 +299,9 @@ const Leaves = () => {
           fromDate: getTodayDate(),
           toDate: getTodayDate(),
           email: email,
+          campus: "", // Reset campus
         });
+        setSelectedCampus("");
         setHalfDay(false);
         setLoading(false);
         handleLoading(false);
@@ -286,14 +318,6 @@ const Leaves = () => {
   const handleLoading = (load) => {
     document.getElementById("root").style.opacity = load ? "0.8" : "1";
   };
-
-  // Dummy leave details - replace this with actual data
-  // const sampleLeaveData = [
-  //   { leaveType: "Exam Leave", balance: 5, booked: 0, available: 5 },
-  //   { leaveType: "Casual Leave", balance: 7, booked: 7, available: 0 },
-  //   { leaveType: "Bereavement Leave", balance: 3, booked: 0, available: 3 },
-  // ];
-
   const apiUrl = `https://script.google.com/macros/s/AKfycbyjEdP-0Q-vdtR8bU0wtgxghfqS_AVHc2dKRUTjjbuzLcdmt81f9lru5AnTF-B5gEum/exec?email=${email}&&type=balanceleave`;
 
   const fetchLeaveDetails = async () => {
@@ -380,7 +404,9 @@ const Leaves = () => {
     // Format the date to YYYY-MM-DD
     return maxDate.toISOString().split("T")[0];
   };
-
+  const handleCampusSelect = (e) => {
+    setSelectedCampus(e.target.value);
+  };
   return (
     <div
       style={{
@@ -390,7 +416,6 @@ const Leaves = () => {
         alignItems: "center",
         width: "100%",
         height: "100%",
-        // padding: "1rem",
       }}
     >
       <LoadingSpinner loading={loading} />
@@ -460,6 +485,20 @@ const Leaves = () => {
                 </option>
               ))}
           </select>
+        </div>
+        <div>
+          <label>Please select your campus:</label>
+          <select value={selectedCampus} onChange={handleCampusSelect} required>
+            <option value="">--Select a campus--</option>
+            {campusData.map((campus, index) => (
+              <option key={index} value={campus.CampusName}>
+                {campus.CampusName}
+              </option>
+            ))}
+          </select>
+          {error && !selectedCampus && (
+            <p style={{ color: "red", marginTop: "5px" }}>{error}</p>
+          )}
         </div>
 
         <div>
